@@ -88,33 +88,38 @@ async def authenticate_user(request: AuthenticateRequest):
         raise HTTPException(status_code=404, detail="User not found.")
 
     user = users[request.user_id]
-    if hashlib.sha256(request.password.encode()).hexdigest() != user["password_hash"]:
-        raise HTTPException(status_code=403, detail="Authentication failed.")
 
+    # Step 1: Validate Password
+    password_hash = hashlib.sha256(request.password.encode()).hexdigest()
+    password_match = password_hash == user["password_hash"]
+
+    # Step 2: Perform Falcon signing and verification
     sk = user["key_pair"]["sk"]
     pk = user["key_pair"]["pk"]
 
-    # Sign and verify the authentication message
     signature = sk.sign(request.auth_message.encode("utf-8"))
     is_valid = pk.verify(request.auth_message.encode("utf-8"), signature)
 
-    if not is_valid:
-        raise HTTPException(status_code=403, detail="Signature verification failed.")
+    # Step 3: Generate Session Key if Password Matches
+    session_key = None
+    if password_match:
+        session_key = Fernet.generate_key().decode()
+        sessions[session_key] = {
+            "user_id": request.user_id,
+            "expires_at": time.time() + 3600  # Session valid for 1 hour
+        }
 
-    # Generate a session key (e.g., using Fernet or JWT)
-    session_key = Fernet.generate_key().decode()
-    sessions[session_key] = {
-        "user_id": request.user_id,
-        "expires_at": time.time() + 3600  # Session valid for 1 hour
-    }
-
-    print(f"Session key for user {request.user_id}: {session_key}")
-
+    # Return detailed interactive feedback
     return {
-        "message": request.auth_message,
-        "is_valid": is_valid,
-        "session_key": session_key
+        "password_validation": "Password matched!" if password_match else "Password mismatch.",
+        "falcon_signing": {
+            "message": request.auth_message,
+            "signature": signature.hex(),
+        },
+        "falcon_verification": "Signature is valid!" if is_valid else "Signature is invalid!",
+        "session_key": session_key,
     }
+
 
 @app.get("/validate-session")
 async def validate_session(session_key: str):

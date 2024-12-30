@@ -77,15 +77,75 @@
 
         .output {
             margin-top: 15px;
-            padding: 10px;
+            padding: 15px;
             border: 1px solid #ddd;
-            border-radius: 5px;
-            background: #e7f3fe;
-            color: #31708f;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #e7f3fe, #ffffff);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            color: #444;
             display: inline-block;
             max-width: 600px;
-            word-wrap: break-word;
             text-align: left;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .output span {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .copyable {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+        }
+
+        .copyable:hover {
+            color: #0056b3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            width: 50%;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #444;
+        }
+
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover,
+        .modal-close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -98,7 +158,7 @@
             <label for="message">Message:</label><br>
             <input type="text" id="message" name="message" placeholder="Enter a message to sign"><br>
             <button type="button" onclick="signMessage()">Sign</button>
-            <button type="button" onclick="verifySignature()">Verify</button>
+            <button type="button" onclick="openVerifyModal()">Verify</button>
             <div id="signature-output" class="output"></div>
         </form>
         <form id="mfa-form">
@@ -106,15 +166,152 @@
             <label for="user_id">User ID:</label><br>
             <input type="text" id="user_id" name="user_id" placeholder="Enter your User ID"><br>
             <label for="password">Password:</label><br>
-            <input type="password" id="password" name="password" placeholder="Enter your Password"><br>
+            <input type="text" id="password" name="password" placeholder="Enter your Password"><br>
             <label for="auth_message">Message:</label><br>
             <input type="text" id="auth_message" name="auth_message" placeholder="Enter authentication message"><br>
             <button type="button" onclick="registerUser()">Register</button>
             <button type="button" onclick="authenticateUser()">Authenticate</button>
             <div id="mfa-output" class="output"></div>
         </form>
+        <form id="session-form">
+            <h2>Session Management</h2>
+            <label for="session_key">Session Key:</label><br>
+            <input type="text" id="session_key" name="session_key" placeholder="Enter your session key"><br>
+            <button type="button" onclick="validateSession()">Validate Session</button>
+            <div id="session-output" class="output"></div>
+        </form>
     </div>
-    <script src="/static/scripts.js"></script>
+
+    <!-- Modal for Signature Verification -->
+    <div id="verifyModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeVerifyModal()">&times;</span>
+            <div class="modal-header">Verify Signature</div>
+            <label for="verification-signature">Signature:</label><br>
+            <input type="text" id="verification-signature" name="verification-signature"
+                placeholder="Enter signature"><br>
+            <button type="button" onclick="verifySignature()">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const content = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                alert("Copied!");
+            });
+        }
+
+        async function signMessage() {
+            const message = document.getElementById("message").value;
+            const response = await fetch("/sign", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ message })
+            });
+            const result = await response.json();
+            document.getElementById("signature-output").innerHTML =
+                `<div>Message: <span>${result.message}</span></div>
+                 <div class="copyable" onclick="copyToClipboard('signature-value')">Signature: <span id="signature-value">${result.signature}</span></div>`;
+        }
+
+        function openVerifyModal() {
+            document.getElementById("verifyModal").style.display = "block";
+        }
+
+        function closeVerifyModal() {
+            document.getElementById("verifyModal").style.display = "none";
+        }
+
+        async function verifySignature() {
+            const message = document.getElementById("message").value;
+            const signature = document.getElementById("verification-signature").value;
+            const response = await fetch("/verify", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ message, signature })
+            });
+            const result = await response.json();
+            document.getElementById("signature-output").innerHTML =
+                `<div>Message: <span>${result.message}</span></div>
+                 <div>Is Valid: <span>${result.is_valid}</span></div>`;
+            closeVerifyModal();
+        }
+
+        async function registerUser() {
+            const user_id = document.getElementById("user_id").value;
+            const password = document.getElementById("password").value;
+            const response = await fetch("/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ user_id, password })
+            });
+            const result = await response.json();
+            document.getElementById("mfa-output").innerHTML =
+                `<div>${result.success}</div>`;
+        }
+
+        async function authenticateUser() {
+            const user_id = document.getElementById("user_id").value;
+            const password = document.getElementById("password").value;
+            const auth_message = document.getElementById("auth_message").value  
+            const response = await fetch("/authenticate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ user_id, password, auth_message }),
+            })  
+            const result = await response.json();
+            console.log(result) 
+            // Display detailed results in a styled format
+            document.getElementById("mfa-output").innerHTML = `
+                    <div>Password Validation: <strong>${result.password_validation}</strong></div>
+                    <div>Message: <strong>${result.falcon_signing.message}</strong></div>
+                    <div>
+                        Signature: 
+                        <span class="copyable" onclick="copyToClipboard('signature-value')">
+                            <span id="signature-value">${result.falcon_signing.signature}</span>
+                        </span>
+                    </div>
+                    <div>Falcon Verification: <strong>${result.falcon_verification}</strong></div>
+                    ${result.session_key
+                                ? `<div>
+                                Session Key: 
+                                <span class="copyable" onclick="copyToClipboard('session-key')">
+                                    <span id="session-key">${result.session_key}</span>
+                                </span>
+                               </div>`
+                                : ""
+                            }
+            `   
+            // Autofill session key if it exists
+            if (result.session_key) {
+                document.getElementById("session_key").value = result.session_key;
+            }
+        }
+
+
+        async function validateSession() {
+            const session_key = document.getElementById("session_key").value;
+            const response = await fetch(`/validate-session?session_key=${session_key}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            const result = await response.json();
+            document.getElementById("session-output").innerHTML =
+                `<div>User ID: <span>${result.user_id}</span></div>
+                 <div>Valid: <span>${result.valid}</span></div>`;
+        }
+    </script>
 </body>
 
 </html>

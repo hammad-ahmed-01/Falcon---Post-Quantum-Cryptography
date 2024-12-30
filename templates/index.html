@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cryptography Interactive Frontend</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        form h2 {
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+
+        input {
+            width: calc(100% - 20px);
+            max-width: 600px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .output {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #e7f3fe;
+            color: #31708f;
+            display: inline-block;
+            max-width: 600px;
+            word-wrap: break-word;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Cryptography Operations</h1>
+    <div class="container">
+        <form id="signature-form">
+            <h2>Signature Verification</h2>
+            <label for="message">Message:</label><br>
+            <input type="text" id="message" name="message" placeholder="Enter a message to sign"><br>
+            <button type="button" onclick="signMessage()">Sign</button>
+            <button type="button" onclick="verifySignature()">Verify</button>
+            <div id="signature-output" class="output"></div>
+        </form>
+        <form id="mfa-form">
+            <h2>Multi-Factor Authentication</h2>
+            <label for="user_id">User ID:</label><br>
+            <input type="text" id="user_id" name="user_id" placeholder="Enter your User ID"><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password" placeholder="Enter your Password"><br>
+            <label for="auth_message">Message:</label><br>
+            <input type="text" id="auth_message" name="auth_message" placeholder="Enter authentication message"><br>
+            <button type="button" onclick="registerUser()">Register</button>
+            <button type="button" onclick="authenticateUser()">Authenticate</button>
+            <div id="mfa-output" class="output"></div>
+        </form>
+    </div>
+    <script src="/static/scripts.js"></script>
+</body>
+
+</html>

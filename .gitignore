@@ -1,0 +1,32 @@
+# Python specific
+__pycache__/
+*.py[cod]
+*.pyo
+*.env
+
+# Virtual environment
+venv/
+env/
+
+# FastAPI and Python
+*.log
+*.sqlite3
+
+# Static and compiled assets
+*.css.map
+*.js.map
+node_modules/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Test reports
+htmlcov/
+.coverage
+*.coverage
